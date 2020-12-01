@@ -1,4 +1,4 @@
-# OBS Control Firebot Startup Script
+# OBS Control Script for Firebot
 
 ## How to use
 1. Install the [OBS Websocket plugin](https://github.com/Palakis/obs-websocket/releases) for OBS
