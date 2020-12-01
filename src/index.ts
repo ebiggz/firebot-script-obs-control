@@ -1,32 +1,88 @@
-import { FirebotCustomScript } from "firebot-custom-scripts-types";
+import { Firebot } from "firebot-custom-scripts-types";
+import { initRemote } from "./obs-remote";
+import { initLogger, logger } from "./logger";
+import { setupFrontendListeners } from "./communicator";
+import { ChangeSceneEffectType } from "./change-scene-effect-type";
+import { OBSEventSource } from "./obs-event-source";
+import { SceneNameVariable } from "./scene-name-variable";
+import { SceneNameEventFilter } from "./scene-name-filter";
 
 interface Params {
-  message: string;
+  ipAddress: string;
+  port: number;
+  password: string;
 }
 
-const script: FirebotCustomScript<Params> = {
+const script: Firebot.CustomScript<Params> = {
   getScriptManifest: () => {
     return {
-      name: "Starter Custom Script",
-      description: "A starter custom script for build",
-      author: "SomeDev",
+      name: "OBS Control",
+      description:
+        "Adds 'Change OBS Scene' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis). Also note: updating any of these settings requires a Firebot restart to take effect.",
+      author: "ebiggz",
       version: "1.0",
       firebotVersion: "5",
+      startupOnly: true,
     };
   },
   getDefaultParameters: () => {
     return {
-      message: {
+      ipAddress: {
         type: "string",
-        default: "Hello World!",
-        description: "Message",
-        secondaryDescription: "Enter a message here",
+        default: "localhost",
+        description: "IP Address",
+        secondaryDescription:
+          "The ip address of the computer running OBS. Use 'localhost' for the same computer.",
+      },
+      port: {
+        type: "number",
+        default: 4444,
+        description: "Port",
+        secondaryDescription:
+          "Port the OBS Websocket is running on. Default is 4444.",
+      },
+      password: {
+        type: "password",
+        default: "",
+        description: "Password",
+        secondaryDescription:
+          "The password set for the OBS Websocket. Can be left blank if none set.",
       },
     };
   },
-  run: (runRequest) => {
-    const { logger } = runRequest.modules;
-    logger.info(runRequest.parameters.message);
+  run: ({ parameters, modules }) => {
+    initLogger(modules.logger);
+
+    logger.info("Starting OBS Control...");
+
+    const {
+      effectManager,
+      eventManager,
+      frontendCommunicator,
+      replaceVariableManager,
+      eventFilterManager,
+    } = modules;
+
+    initRemote(
+      {
+        ip: parameters.ipAddress,
+        port: parameters.port,
+        password: parameters.password,
+      },
+      {
+        eventManager,
+      }
+    );
+
+    setupFrontendListeners(frontendCommunicator);
+
+    effectManager.registerEffect(ChangeSceneEffectType);
+
+    eventManager.registerEventSource(OBSEventSource);
+
+    eventFilterManager.registerFilter(SceneNameEventFilter);
+
+    replaceVariableManager.registerReplaceVariable(SceneNameVariable);
   },
 };
 
