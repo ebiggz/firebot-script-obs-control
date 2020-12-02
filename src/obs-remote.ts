@@ -1,6 +1,9 @@
 import { ScriptModules } from "firebot-custom-scripts-types";
 import * as OBSWebSocket from "obs-websocket-js";
-import { OBS_EVENT_SOURCE_ID, OBS_SCENE_CHANGED_EVENT_ID } from "./constants";
+import {
+  OBS_EVENT_SOURCE_ID,
+  OBS_SCENE_CHANGED_EVENT_ID,
+} from "./firebot/constants";
 import { logger } from "./logger";
 
 let eventManager: ScriptModules["eventManager"];

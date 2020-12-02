@@ -1,5 +1,5 @@
 import { ScriptModules } from "firebot-custom-scripts-types";
-import { getSceneList } from "./obs-remote";
+import { getSceneList } from "../obs-remote";
 
 export function setupFrontendListeners(
   frontendCommunicator: ScriptModules["frontendCommunicator"]

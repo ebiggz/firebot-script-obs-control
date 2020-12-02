@@ -1,5 +1,5 @@
 import { Firebot } from "firebot-custom-scripts-types";
-import { setCurrentScene } from "./obs-remote";
+import { setCurrentScene } from "../../obs-remote";
 
 export const ChangeSceneEffectType: Firebot.EffectType<{
   sceneName: string;

@@ -1,11 +1,11 @@
 import { Firebot } from "firebot-custom-scripts-types";
 import { initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
-import { setupFrontendListeners } from "./communicator";
-import { ChangeSceneEffectType } from "./change-scene-effect-type";
-import { OBSEventSource } from "./obs-event-source";
-import { SceneNameVariable } from "./scene-name-variable";
-import { SceneNameEventFilter } from "./scene-name-filter";
+import { setupFrontendListeners } from "./firebot/communicator";
+import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-type";
+import { OBSEventSource } from "./firebot/events/obs-event-source";
+import { SceneNameVariable } from "./firebot/variables/scene-name-variable";
+import { SceneNameEventFilter } from "./firebot/filters/scene-name-filter";
 
 interface Params {
   ipAddress: string;
