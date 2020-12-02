@@ -39,6 +39,16 @@ export async function getSceneList(): Promise<string[]> {
   }
 }
 
+export async function getCurrentSceneName(): Promise<string> {
+  if (!connected) return null;
+  try {
+    const scene = await obs.send("GetCurrentScene");
+    return scene?.name;
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function setCurrentScene(sceneName: string): Promise<void> {
   if (!connected) return;
   try {

@@ -20,7 +20,7 @@ const script: Firebot.CustomScript<Params> = {
       description:
         "Adds 'Change OBS Scene' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis). Also note: updating any of these settings requires a Firebot restart to take effect.",
       author: "ebiggz",
-      version: "1.0",
+      version: "1.1",
       firebotVersion: "5",
       startupOnly: true,
     };
