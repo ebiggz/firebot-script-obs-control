@@ -8,6 +8,7 @@
 
 ## Developers
 ### Setup
+1. Clone or fork repo
 2. `npm install`
 
 ### Building
