@@ -6,6 +6,7 @@ import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-typ
 import { OBSEventSource } from "./firebot/events/obs-event-source";
 import { SceneNameVariable } from "./firebot/variables/scene-name-variable";
 import { SceneNameEventFilter } from "./firebot/filters/scene-name-filter";
+import { ToggleSourceVisibilityEffectType } from "./firebot/effects/toggle-obs-source-visibility";
 
 interface Params {
   ipAddress: string;
@@ -77,6 +78,7 @@ const script: Firebot.CustomScript<Params> = {
     setupFrontendListeners(frontendCommunicator);
 
     effectManager.registerEffect(ChangeSceneEffectType);
+    effectManager.registerEffect(ToggleSourceVisibilityEffectType);
 
     eventManager.registerEventSource(OBSEventSource);
 

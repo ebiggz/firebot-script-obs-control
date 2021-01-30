@@ -56,7 +56,63 @@ export async function setCurrentScene(sceneName: string): Promise<void> {
       "scene-name": sceneName,
     });
   } catch (error) {
-    console.log("Failed to set current scene", error);
+    logger.error("Failed to set current scene", error);
+  }
+}
+
+export type SourceData = Record<string, Array<{ id: number; name: string }>>;
+
+export async function getSourceData(): Promise<SourceData> {
+  if (!connected) return null;
+  try {
+    const sceneData = await obs.send("GetSceneList");
+    return sceneData.scenes.reduce((acc, current) => {
+      acc[current.name] = current.sources.map((si) => ({
+        name: si.name,
+        id: si.id,
+      }));
+      return acc;
+    }, {} as SourceData);
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function getSourceVisibility(
+  sourceId: number
+): Promise<boolean | null> {
+  if (!connected) return null;
+  try {
+    const sceneItemProperties = await obs.send("GetSceneItemProperties", {
+      item: {
+        id: sourceId,
+      },
+    });
+    return sceneItemProperties?.visible;
+  } catch (error) {
+    logger.error("Failed to get scene item properties", error);
+    return null;
+  }
+}
+
+export async function setSourceVisibility(
+  sourceId: number,
+  visible: boolean
+): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("SetSceneItemProperties", {
+      item: {
+        id: sourceId,
+      },
+      visible: visible,
+      bounds: undefined,
+      crop: undefined,
+      position: undefined,
+      scale: undefined,
+    });
+  } catch (error) {
+    logger.error("Failed to set scene item properties", error);
   }
 }
 
