@@ -5,9 +5,22 @@ import {
   SourceData,
 } from "../../obs-remote";
 
-export const ToggleSourceVisibilityEffectType: Firebot.EffectType<{
-  sources: Record<number, boolean | "toggle">;
-}> = {
+type SourceAction = boolean | "toggle";
+
+type EffectProperties = {
+  selectedSources: Array<{
+    sceneName: string;
+    sourceId: number;
+    action: SourceAction;
+  }>;
+};
+
+type Scope = {
+  effect: EffectProperties;
+  [x: string]: any;
+};
+
+export const ToggleSourceVisibilityEffectType: Firebot.EffectType<EffectProperties> = {
   definition: {
     id: "ebiggz:obs-toggle-source-visibility",
     name: "Toggle OBS Source Visibility",
@@ -21,18 +34,18 @@ export const ToggleSourceVisibilityEffectType: Firebot.EffectType<{
         <div style="font-size: 16px;font-weight: 900;color: #b9b9b9;margin-bottom: 5px;">{{sceneName}}</div>
         <div ng-repeat="source in getSources(sceneName)">
           <label  class="control-fb control--checkbox">{{source.name}}
-              <input type="checkbox" ng-click="toggleSourceSelected(source.id)" ng-checked="sourceIsSelected(source.id)"  aria-label="..." >
+              <input type="checkbox" ng-click="toggleSourceSelected(sceneName, source.id)" ng-checked="sourceIsSelected(sceneName, source.id)"  aria-label="..." >
               <div class="control__indicator"></div>
           </label>
-          <div ng-show="sourceIsSelected(source.id)" style="margin-bottom: 15px;">
+          <div ng-show="sourceIsSelected(sceneName, source.id)" style="margin-bottom: 15px;">
             <div class="btn-group" uib-dropdown>
                 <button id="single-button" type="button" class="btn btn-default" uib-dropdown-toggle>
-                {{getSourceActionDisplay(source.id)}} <span class="caret"></span>
+                {{getSourceActionDisplay(sceneName, source.id)}} <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button">
-                    <li role="menuitem" ng-click="setSourceActionDisplay(source.id, true)"><a href>Show</a></li>
-                    <li role="menuitem" ng-click="setSourceActionDisplay(source.id, false)"><a href>Hide</a></li>
-                    <li role="menuitem" ng-click="setSourceActionDisplay(source.id, 'toggle')"><a href>Toggle</a></li>
+                    <li role="menuitem" ng-click="setSourceAction(sceneName, source.id, true)"><a href>Show</a></li>
+                    <li role="menuitem" ng-click="setSourceAction(sceneName, source.id, false)"><a href>Hide</a></li>
+                    <li role="menuitem" ng-click="setSourceAction(sceneName, source.id, 'toggle')"><a href>Toggle</a></li>
                 </ul>
             </div>
           </div>
@@ -46,13 +59,13 @@ export const ToggleSourceVisibilityEffectType: Firebot.EffectType<{
       </p>
     </eos-container>
   `,
-  optionsController: ($scope: any, backendCommunicator: any, $q: any) => {
+  optionsController: ($scope: Scope, backendCommunicator: any, $q: any) => {
     $scope.sourceData = null;
 
     $scope.sceneNames = [];
 
-    if ($scope.effect.sources == null) {
-      $scope.effect.sources = {};
+    if ($scope.effect.selectedSources == null) {
+      $scope.effect.selectedSources = [];
     }
 
     $scope.getSources = (sceneName: string) => {
@@ -63,31 +76,49 @@ export const ToggleSourceVisibilityEffectType: Firebot.EffectType<{
       return $scope.sourceData ? Object.keys($scope.sourceData) : [];
     };
 
-    $scope.sourceIsSelected = (sourceId: number) => {
-      return $scope.effect.sources[sourceId] != null;
+    $scope.sourceIsSelected = (sceneName: string, sourceId: number) => {
+      return $scope.effect.selectedSources.some(
+        (s) => s.sceneName === sceneName && s.sourceId === sourceId
+      );
     };
 
-    $scope.toggleSourceSelected = (sourceId: number) => {
-      if ($scope.sourceIsSelected(sourceId)) {
-        delete $scope.effect.sources[sourceId];
+    $scope.toggleSourceSelected = (sceneName: string, sourceId: number) => {
+      if ($scope.sourceIsSelected(sceneName, sourceId)) {
+        $scope.effect.selectedSources = $scope.effect.selectedSources.filter(
+          (s) => s.sceneName === sceneName && s.sourceId === sourceId
+        );
       } else {
-        $scope.effect.sources[sourceId] = true;
+        $scope.effect.selectedSources.push({
+          sceneName,
+          sourceId,
+          action: true,
+        });
       }
     };
 
-    $scope.setSourceActionDisplay = (
+    $scope.setSourceAction = (
+      sceneName: string,
       sourceId: number,
       action: "toggle" | boolean
     ) => {
-      $scope.effect.sources[sourceId] = action;
+      const selectedSource = $scope.effect.selectedSources.find(
+        (s) => s.sceneName === sceneName && s.sourceId === sourceId
+      );
+      if (selectedSource != null) {
+        selectedSource.action = action;
+      }
     };
 
-    $scope.getSourceActionDisplay = (sourceId: number) => {
-      const action = $scope.effect.sources[sourceId];
-      if (action === "toggle") {
+    $scope.getSourceActionDisplay = (sceneName: string, sourceId: number) => {
+      const selectedSource = $scope.effect.selectedSources.find(
+        (s) => s.sceneName === sceneName && s.sourceId === sourceId
+      );
+      if (selectedSource == null) return "";
+
+      if (selectedSource.action === "toggle") {
         return "Toggle";
       }
-      if (action === true) {
+      if (selectedSource.action === true) {
         return "Show";
       }
       return "Hide";
@@ -106,23 +137,22 @@ export const ToggleSourceVisibilityEffectType: Firebot.EffectType<{
     return [];
   },
   onTriggerEvent: async ({ effect }) => {
-    if (effect.sources == null) return true;
+    if (effect.selectedSources == null) return true;
 
-    const sources = Object.entries(effect.sources);
-
-    for (const [sourceIdKey, action] of sources) {
-      const sourceId = parseInt(sourceIdKey);
-
+    for (const { sceneName, sourceId, action } of effect.selectedSources) {
       let newVisibility;
       if (action === "toggle") {
-        const currentVisibility = await getSourceVisibility(sourceId);
+        const currentVisibility = await getSourceVisibility(
+          sceneName,
+          sourceId
+        );
         if (currentVisibility == null) continue;
         newVisibility = !currentVisibility;
       } else {
         newVisibility = action === true;
       }
 
-      await setSourceVisibility(sourceId, newVisibility);
+      await setSourceVisibility(sceneName, sourceId, newVisibility);
     }
 
     return true;

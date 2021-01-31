@@ -79,11 +79,13 @@ export async function getSourceData(): Promise<SourceData> {
 }
 
 export async function getSourceVisibility(
+  sceneName: string,
   sourceId: number
 ): Promise<boolean | null> {
   if (!connected) return null;
   try {
     const sceneItemProperties = await obs.send("GetSceneItemProperties", {
+      "scene-name": sceneName,
       item: {
         id: sourceId,
       },
@@ -96,12 +98,14 @@ export async function getSourceVisibility(
 }
 
 export async function setSourceVisibility(
+  sceneName: string,
   sourceId: number,
   visible: boolean
 ): Promise<void> {
   if (!connected) return;
   try {
     await obs.send("SetSceneItemProperties", {
+      "scene-name": sceneName,
       item: {
         id: sourceId,
       },
