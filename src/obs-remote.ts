@@ -120,6 +120,78 @@ export async function setSourceVisibility(
   }
 }
 
+type OBSFilter = {
+  enabled: boolean;
+  name: string;
+};
+
+export type OBSSource = {
+  name: string;
+  type: string;
+  typeId: string;
+  filters: Array<OBSFilter>;
+};
+
+export async function getAllSources(): Promise<Array<OBSSource>> {
+  if (!connected) return null;
+  try {
+    const sourceListData = await obs.send("GetSourcesList");
+    if (sourceListData && sourceListData.sources) {
+      const sources = (sourceListData.sources as unknown) as Array<OBSSource>;
+      for (const source of sources) {
+        const sourceFiltersData = await obs.send("GetSourceFilters", {
+          sourceName: source.name,
+        });
+        source.filters = (sourceFiltersData.filters as unknown) as Array<OBSFilter>;
+      }
+      return sources;
+    }
+    return null;
+  } catch (error) {
+    logger.error("Failed to get all sources", error);
+    return null;
+  }
+}
+
+export async function getSourcesWithFilters(): Promise<Array<OBSSource>> {
+  const sources = await getAllSources();
+  return sources.filter((s) => s.filters?.length > 0);
+}
+
+export async function getFilterEnabledStatus(
+  sourceName: string,
+  filterName: string
+): Promise<boolean | null> {
+  if (!connected) return null;
+  try {
+    const filterInfo = await obs.send("GetSourceFilterInfo", {
+      sourceName,
+      filterName,
+    });
+    return filterInfo?.enabled;
+  } catch (error) {
+    logger.error("Failed to get filter info", error);
+    return null;
+  }
+}
+
+export async function setFilterEnabled(
+  sourceName: string,
+  filterName: string,
+  filterEnabled: boolean
+): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("SetSourceFilterVisibility", {
+      sourceName,
+      filterName,
+      filterEnabled,
+    });
+  } catch (error) {
+    logger.error("Failed to set filter enable status", error);
+  }
+}
+
 function setupRemoteListeners() {
   obs.on("SwitchScenes", (data) => {
     eventManager?.triggerEvent(

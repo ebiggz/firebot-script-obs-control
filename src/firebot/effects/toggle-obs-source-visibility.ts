@@ -85,7 +85,7 @@ export const ToggleSourceVisibilityEffectType: Firebot.EffectType<EffectProperti
     $scope.toggleSourceSelected = (sceneName: string, sourceId: number) => {
       if ($scope.sourceIsSelected(sceneName, sourceId)) {
         $scope.effect.selectedSources = $scope.effect.selectedSources.filter(
-          (s) => s.sceneName === sceneName && s.sourceId === sourceId
+          (s) => !(s.sceneName === sceneName && s.sourceId === sourceId)
         );
       } else {
         $scope.effect.selectedSources.push({

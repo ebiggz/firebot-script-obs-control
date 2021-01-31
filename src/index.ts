@@ -1,5 +1,5 @@
 import { Firebot } from "firebot-custom-scripts-types";
-import { initRemote } from "./obs-remote";
+import { getAllSources, initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
 import { setupFrontendListeners } from "./firebot/communicator";
 import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-type";
@@ -7,6 +7,7 @@ import { OBSEventSource } from "./firebot/events/obs-event-source";
 import { SceneNameVariable } from "./firebot/variables/scene-name-variable";
 import { SceneNameEventFilter } from "./firebot/filters/scene-name-filter";
 import { ToggleSourceVisibilityEffectType } from "./firebot/effects/toggle-obs-source-visibility";
+import { ToggleSourceFilterEffectType } from "./firebot/effects/toggle-obs-source-filter";
 
 interface Params {
   ipAddress: string;
@@ -19,9 +20,9 @@ const script: Firebot.CustomScript<Params> = {
     return {
       name: "OBS Control",
       description:
-        "Adds 'Change OBS Scene' Effect, 'Toggle OBS Source Visibility' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis). Also note: updating any of these settings requires a Firebot restart to take effect.",
+        "Adds 'Change OBS Scene' Effect, 'Toggle OBS Source Visibility' Effect, 'Toggle OBS Source Filter' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis). Also note: updating any of these settings requires a Firebot restart to take effect.",
       author: "ebiggz",
-      version: "1.3.1",
+      version: "1.4.0",
       firebotVersion: "5",
       startupOnly: true,
     };
@@ -79,6 +80,7 @@ const script: Firebot.CustomScript<Params> = {
 
     effectManager.registerEffect(ChangeSceneEffectType);
     effectManager.registerEffect(ToggleSourceVisibilityEffectType);
+    effectManager.registerEffect(ToggleSourceFilterEffectType);
 
     eventManager.registerEventSource(OBSEventSource);
 

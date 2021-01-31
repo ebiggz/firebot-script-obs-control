@@ -1,5 +1,12 @@
 import { ScriptModules } from "firebot-custom-scripts-types";
-import { getSceneList, getSourceData, SourceData } from "../obs-remote";
+import {
+  getAllSources,
+  getSceneList,
+  getSourceData,
+  SourceData,
+  OBSSource,
+  getSourcesWithFilters,
+} from "../obs-remote";
 
 export function setupFrontendListeners(
   frontendCommunicator: ScriptModules["frontendCommunicator"]
@@ -12,5 +19,10 @@ export function setupFrontendListeners(
   frontendCommunicator.onAsync<never, SourceData>(
     "obs-get-source-data",
     getSourceData
+  );
+
+  frontendCommunicator.onAsync<never, Array<OBSSource>>(
+    "obs-get-sources-with-filters",
+    getSourcesWithFilters
   );
 }
