@@ -1,5 +1,5 @@
 import { Firebot } from "firebot-custom-scripts-types";
-import { getAllSources, initRemote } from "./obs-remote";
+import { initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
 import { setupFrontendListeners } from "./firebot/communicator";
 import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-type";

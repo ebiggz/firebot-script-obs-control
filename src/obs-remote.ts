@@ -137,7 +137,13 @@ export async function getAllSources(): Promise<Array<OBSSource>> {
   try {
     const sourceListData = await obs.send("GetSourcesList");
     if (sourceListData && sourceListData.sources) {
-      const sources = (sourceListData.sources as unknown) as Array<OBSSource>;
+      let sources = (sourceListData.sources as unknown) as Array<OBSSource>;
+      const sceneNameList = await getSceneList();
+      sources = sources.concat(
+        sceneNameList.map(
+          (s) => ({ name: s, filters: [], type: "", typeId: "" } as OBSSource)
+        )
+      );
       for (const source of sources) {
         const sourceFiltersData = await obs.send("GetSourceFilters", {
           sourceName: source.name,
