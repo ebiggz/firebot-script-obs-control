@@ -1,7 +1,7 @@
-import { Firebot } from "firebot-custom-scripts-types";
+import { EventFilter } from "firebot-custom-scripts-types/types/modules/event-filter-manager";
 import { OBS_EVENT_SOURCE_ID, OBS_SCENE_CHANGED_EVENT_ID } from "../constants";
 
-export const SceneNameEventFilter: Firebot.EventFilter = {
+export const SceneNameEventFilter: EventFilter = {
   id: "ebiggz:obs-scene-name",
   name: "Scene Name",
   events: [

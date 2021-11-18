@@ -1,7 +1,7 @@
-import { Firebot } from "firebot-custom-scripts-types";
+import { EventSource } from "firebot-custom-scripts-types/types/modules/event-manager";
 import { OBS_EVENT_SOURCE_ID, OBS_SCENE_CHANGED_EVENT_ID } from "../constants";
 
-export const OBSEventSource: Firebot.EventSource = {
+export const OBSEventSource: EventSource = {
   id: OBS_EVENT_SOURCE_ID,
   name: "OBS",
   events: [

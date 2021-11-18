@@ -1,7 +1,7 @@
 {
   "name": "obs-control-firebot-script",
   "scriptOutputName": "obsControl",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A Firebot custom script that adds OBS control over websocket",
   "main": "",
   "scripts": {
@@ -13,8 +13,9 @@
   "author": "ebiggz",
   "license": "GNU3",
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/node": "^14.14.6",
-    "firebot-custom-scripts-types": "https://github.com/crowbartools/firebot-custom-scripts-types/tarball/99adbf28c0ed2d8a9bc3df01bb6639536f598d5b",
+    "firebot-custom-scripts-types": "https://github.com/crowbartools/firebot-custom-scripts-types/tarball/c67f513bca798c77277a5c196e42b73fa01d782d",
     "jest": "^26.6.3",
     "terser-webpack-plugin": "^4.2.3",
     "ts-jest": "^26.4.4",
@@ -24,6 +25,6 @@
     "webpack-cli": "^4.1.0"
   },
   "dependencies": {
-    "obs-websocket-js": "^4.0.2"
+    "obs-websocket-js": "^4.0.3"
   }
 }

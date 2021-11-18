@@ -23,15 +23,15 @@ type Scope = {
 export const ToggleSourceFilterEffectType: Firebot.EffectType<EffectProperties> = {
   definition: {
     id: "ebiggz:obs-toggle-source-filter",
-    name: "Toggle OBS Source Filter",
-    description: "Toggle filters for OBS sources",
+    name: "Toggle OBS Filter",
+    description: "Toggle filters for OBS sources and scenes",
     icon: "fad fa-stars",
     categories: ["common"],
   },
   optionsTemplate: `
     <eos-container header="Filters">
       <div ng-if="sourceList != null && sourceList.length > 0" ng-repeat="source in sourceList">
-        <div style="font-size: 16px;font-weight: 900;color: #b9b9b9;margin-bottom: 5px;">{{source.name}}</div>
+        <div style="font-size: 16px;color: #b9b9b9;margin-bottom: 5px;"><b>{{source.name}}</b> <span style="font-size: 13px;">({{formatSourceType(source.typeId)}})</span></div>
         <div ng-repeat="filter in source.filters">
           <label  class="control-fb control--checkbox">{{filter.name}}
               <input type="checkbox" ng-click="toggleFilterSelected(source.name, filter.name)" ng-checked="filterIsSelected(source.name, filter.name)"  aria-label="..." >
@@ -119,6 +119,15 @@ export const ToggleSourceFilterEffectType: Firebot.EffectType<EffectProperties> 
       }
       return "Disable";
     };
+
+    const capitalizeWords = (input: string) => input
+      .split(" ")
+      .map(w => w[0].toLocaleUpperCase() + w.substr(1).toLocaleLowerCase())
+      .join(" ");
+
+    $scope.formatSourceType = (type: string) => {
+      return capitalizeWords((type ?? "").replace("_", " "));
+    }
 
     $scope.getSourceList = () => {
       $q.when(

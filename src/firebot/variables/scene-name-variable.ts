@@ -1,7 +1,7 @@
-import { Firebot } from "firebot-custom-scripts-types";
+import { ReplaceVariable } from "firebot-custom-scripts-types/types/modules/replace-variable-manager";
 import { getCurrentSceneName } from "../../obs-remote";
 
-export const SceneNameVariable: Firebot.ReplaceVariable = {
+export const SceneNameVariable: ReplaceVariable = {
   definition: {
     handle: "obsSceneName",
     description:

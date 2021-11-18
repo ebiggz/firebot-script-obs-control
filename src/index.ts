@@ -20,9 +20,9 @@ const script: Firebot.CustomScript<Params> = {
     return {
       name: "OBS Control",
       description:
-        "Adds 'Change OBS Scene' Effect, 'Toggle OBS Source Visibility' Effect, 'Toggle OBS Source Filter' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis). Also note: updating any of these settings requires a Firebot restart to take effect.",
+        "Adds 'Change OBS Scene' Effect, 'Toggle OBS Source Visibility' Effect, 'Toggle OBS Filter' Effect, 'OBS Scene Changed' Event, 'Scene Name' Event Filter, and $obsSceneName Variable. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis), version v4.7+ but not v5! Also note: updating any of these settings requires a Firebot restart to take effect.",
       author: "ebiggz",
-      version: "1.4.0",
+      version: "1.5.0",
       firebotVersion: "5",
       startupOnly: true,
     };
