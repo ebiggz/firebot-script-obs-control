@@ -3,6 +3,8 @@ import * as OBSWebSocket from "obs-websocket-js";
 import {
   OBS_EVENT_SOURCE_ID,
   OBS_SCENE_CHANGED_EVENT_ID,
+  OBS_STREAM_STARTED_EVENT_ID,
+  OBS_STREAM_STOPPED_EVENT_ID,
 } from "./firebot/constants";
 import { logger } from "./logger";
 
@@ -198,6 +200,77 @@ export async function setFilterEnabled(
   }
 }
 
+async function getSourceTypes() {
+  try {
+    const sourceTypes = await obs.send("GetSourceTypesList");
+    return sourceTypes.types;
+  } catch(error) {
+    logger.error("Failed to get source types list", error);
+    return [];
+  }
+}
+
+export async function getAudioSources(): Promise<Array<OBSSource>> {
+  const sourceTypes = await getSourceTypes();
+  const sources = await getAllSources();
+  return sources.filter((s) => {
+    const type = sourceTypes.find(t => t.typeId === s.typeId);
+    return type?.caps.hasAudio;
+  });
+}
+
+export async function toggleSourceMuted(sourceName: string) {
+  try {
+    await obs.send("ToggleMute", {
+      source: sourceName
+    })
+  } catch(error) {
+    logger.error("Failed to toggle mute for source", error);
+  }
+}
+
+export async function setSourceMuted(sourceName: string, muted: boolean) {
+  try {
+    await obs.send("SetMute", {
+      source: sourceName,
+      mute: muted
+    })
+  } catch(error) {
+    logger.error("Failed to set mute for source", error);
+  }
+}
+
+export async function getStreamingStatus(): Promise<boolean> {
+  if (!connected) return false;
+  try {
+    const streamingStatus = await obs.send("GetStreamingStatus");
+    return streamingStatus.streaming;
+  } catch (error) {
+    logger.error("Failed to get streaming status", error);
+    return false;
+  }
+}
+
+export async function startStreaming(): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("StartStreaming", {});
+  } catch (error) {
+    logger.error("Failed to start streaming", error);
+    return;
+  }
+}
+
+export async function stopStreaming(): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("StopStreaming");
+  } catch (error) {
+    logger.error("Failed to stop streaming", error);
+    return;
+  }
+}
+
 function setupRemoteListeners() {
   obs.on("SwitchScenes", (data) => {
     eventManager?.triggerEvent(
@@ -206,6 +279,22 @@ function setupRemoteListeners() {
       {
         sceneName: data["scene-name"],
       }
+    );
+  });
+
+  obs.on("StreamStarted", () => {
+    eventManager?.triggerEvent(
+      OBS_EVENT_SOURCE_ID,
+      OBS_STREAM_STARTED_EVENT_ID,
+      {}
+    );
+  });
+
+  obs.on("StreamStopped", () => {
+    eventManager?.triggerEvent(
+      OBS_EVENT_SOURCE_ID,
+      OBS_STREAM_STOPPED_EVENT_ID,
+      {}
     );
   });
 }

@@ -6,6 +6,7 @@ import {
   SourceData,
   OBSSource,
   getSourcesWithFilters,
+  getAudioSources,
 } from "../obs-remote";
 
 export function setupFrontendListeners(
@@ -24,5 +25,10 @@ export function setupFrontendListeners(
   frontendCommunicator.onAsync<never, Array<OBSSource>>(
     "obs-get-sources-with-filters",
     getSourcesWithFilters
+  );
+
+  frontendCommunicator.onAsync<never, Array<OBSSource>>(
+    "obs-get-audio-sources",
+    getAudioSources
   );
 }

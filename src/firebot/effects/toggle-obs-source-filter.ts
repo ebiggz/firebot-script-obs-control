@@ -126,7 +126,7 @@ export const ToggleSourceFilterEffectType: Firebot.EffectType<EffectProperties> 
       .join(" ");
 
     $scope.formatSourceType = (type: string) => {
-      return capitalizeWords((type ?? "").replace("_", " "));
+      return capitalizeWords((type ?? "").replace(/_/, " "));
     }
 
     $scope.getSourceList = () => {
