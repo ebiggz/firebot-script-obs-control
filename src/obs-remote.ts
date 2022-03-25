@@ -19,17 +19,19 @@ export function initRemote(
     ip,
     port,
     password,
+    logging,
   }: {
     ip: string;
     port: number;
     password: string;
+    logging: boolean;
   },
   modules: {
     eventManager: ScriptModules["eventManager"];
   }
-) {
+): void {
   eventManager = modules.eventManager;
-  maintainConnection(ip, port, password);
+  maintainConnection(ip, port, password, logging);
 }
 export async function getSceneList(): Promise<string[]> {
   if (!connected) return [];
@@ -299,10 +301,12 @@ function setupRemoteListeners() {
   });
 }
 
-async function maintainConnection(ip: string, port: number, password: string) {
+async function maintainConnection(ip: string, port: number, password: string, logging: Boolean) {
   if (!connected) {
     try {
-      logger.debug("Trying to connect to OBS...");
+      if (logging){
+        logger.debug("Trying to connect to OBS...");
+      }
 
       obs.removeAllListeners();
 
@@ -319,15 +323,17 @@ async function maintainConnection(ip: string, port: number, password: string) {
         connected = false;
         try {
           logger.info("Connection lost, attempting again in 10 secs.");
-          setTimeout(() => maintainConnection(ip, port, password), 10000);
+          setTimeout(() => maintainConnection(ip, port, password, logging), 10000);
         } catch (err) {
           // silently fail
         }
       });
     } catch (error) {
       logger.debug("Failed to connect, attempting again in 10 secs.");
-      logger.debug(error);
-      setTimeout(() => maintainConnection(ip, port, password), 10000);
+      if(logging){
+        logger.debug(error);
+      }
+      setTimeout(() => maintainConnection(ip, port, password, logging), 10000);
     }
   }
 }

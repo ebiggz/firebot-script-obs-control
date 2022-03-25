@@ -16,6 +16,7 @@ interface Params {
   ipAddress: string;
   port: number;
   password: string;
+  logging: boolean;
 }
 
 const script: Firebot.CustomScript<Params> = {
@@ -53,6 +54,11 @@ const script: Firebot.CustomScript<Params> = {
         secondaryDescription:
           "The password set for the OBS Websocket. Can be left blank if none set.",
       },
+      logging: {
+        type: "boolean",
+        default: true,
+        description: "Enable logging for OBS Errors",
+      }
     };
   },
   run: ({ parameters, modules }) => {
@@ -73,6 +79,7 @@ const script: Firebot.CustomScript<Params> = {
         ip: parameters.ipAddress,
         port: parameters.port,
         password: parameters.password,
+        logging: parameters.logging,
       },
       {
         eventManager,
