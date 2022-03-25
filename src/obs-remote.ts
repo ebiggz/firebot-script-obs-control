@@ -29,7 +29,7 @@ export function initRemote(
   modules: {
     eventManager: ScriptModules["eventManager"];
   }
-): void {
+) {
   eventManager = modules.eventManager;
   maintainConnection(ip, port, password, logging);
 }
