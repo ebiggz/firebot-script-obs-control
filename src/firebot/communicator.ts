@@ -2,6 +2,7 @@ import { ScriptModules } from "firebot-custom-scripts-types";
 import {
   getAllSources,
   getSceneList,
+  getSceneCollectionList,
   getSourceData,
   SourceData,
   OBSSource,
@@ -15,6 +16,11 @@ export function setupFrontendListeners(
   frontendCommunicator.onAsync<never, string[]>(
     "obs-get-scene-list",
     getSceneList
+  );
+  
+  frontendCommunicator.onAsync<never, string[]>(
+    "obs-get-scene-collection-list",
+    getSceneCollectionList
   );
 
   frontendCommunicator.onAsync<never, SourceData>(

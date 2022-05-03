@@ -64,6 +64,37 @@ export async function setCurrentScene(sceneName: string): Promise<void> {
   }
 }
 
+export async function getSceneCollectionList(): Promise<string[]> {
+  if (!connected) return [];
+  try {
+    const sceneCollectionData = await obs.send("ListSceneCollections");
+    return sceneCollectionData["scene-collections"].map((s) => s["sc-name"]);
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getCurrentSceneCollectionName(): Promise<string> {
+  if (!connected) return null;
+  try {
+    const scene = await obs.send("GetCurrentSceneCollection");
+    return scene["sc-name"];
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function setCurrentSceneCollection(sceneCollectionName: string): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("SetCurrentSceneCollection", {
+      "sc-name": sceneCollectionName,
+    });
+  } catch (error) {
+    logger.error("Failed to set current scene collection", error);
+  }
+}
+
 export type SourceData = Record<string, Array<{ id: number; name: string }>>;
 
 export async function getSourceData(): Promise<SourceData> {
@@ -269,6 +300,26 @@ export async function stopStreaming(): Promise<void> {
     await obs.send("StopStreaming");
   } catch (error) {
     logger.error("Failed to stop streaming", error);
+    return;
+  }
+}
+
+export async function startVirtualCam(): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("StartVirtualCam");
+  } catch (error) {
+    logger.error("Failed to start virtual camera", error);
+    return;
+  }
+}
+
+export async function stopVirtualCam(): Promise<void> {
+  if (!connected) return;
+  try {
+    await obs.send("StopVirtualCam");
+  } catch (error) {
+    logger.error("Failed to stop virtual camera", error);
     return;
   }
 }
