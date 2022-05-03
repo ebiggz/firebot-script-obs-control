@@ -1,7 +1,7 @@
 {
   "name": "obs-control-firebot-script",
   "scriptOutputName": "obsControl",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A Firebot custom script that adds OBS control over websocket",
   "main": "",
   "scripts": {

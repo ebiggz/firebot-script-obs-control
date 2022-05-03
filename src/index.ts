@@ -3,13 +3,17 @@ import { initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
 import { setupFrontendListeners } from "./firebot/communicator";
 import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-type";
+import { ChangeSceneCollectionEffectType } from "./firebot/effects/change-scene-collection";
 import { OBSEventSource } from "./firebot/events/obs-event-source";
 import { SceneNameVariable } from "./firebot/variables/scene-name-variable";
+import { SceneCollectionNameVariable } from "./firebot/variables/scene-collection-name-variable";
 import { SceneNameEventFilter } from "./firebot/filters/scene-name-filter";
 import { ToggleSourceVisibilityEffectType } from "./firebot/effects/toggle-obs-source-visibility";
 import { ToggleSourceFilterEffectType } from "./firebot/effects/toggle-obs-source-filter";
-import { StopStreamEffectType } from "./firebot/effects/stop-stream";
 import { StartStreamEffectType } from "./firebot/effects/start-stream";
+import { StopStreamEffectType } from "./firebot/effects/stop-stream";
+import { StartVirtualCamEffectType } from "./firebot/effects/start-virtual-cam";
+import { StopVirtualCamEffectType } from "./firebot/effects/stop-virtual-cam";
 import { ToggleSourceMutedEffectType } from "./firebot/effects/toggle-obs-source-muted";
 
 interface Params {
@@ -25,7 +29,7 @@ const script: Firebot.CustomScript<Params> = {
       description:
         "Adds several OBS effects, events, and $variables. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis), version v4.7+ but not v5! Also note: updating any of these settings requires a Firebot restart to take effect.",
       author: "ebiggz",
-      version: "1.5.0",
+      version: "1.6.0",
       firebotVersion: "5",
       startupOnly: true,
     };
@@ -82,17 +86,21 @@ const script: Firebot.CustomScript<Params> = {
     setupFrontendListeners(frontendCommunicator);
 
     effectManager.registerEffect(ChangeSceneEffectType);
+    effectManager.registerEffect(ChangeSceneCollectionEffectType);
     effectManager.registerEffect(ToggleSourceVisibilityEffectType);
     effectManager.registerEffect(ToggleSourceFilterEffectType);
     effectManager.registerEffect(ToggleSourceMutedEffectType);
     effectManager.registerEffect(StartStreamEffectType);
     effectManager.registerEffect(StopStreamEffectType);
+    effectManager.registerEffect(StartVirtualCamEffectType);
+    effectManager.registerEffect(StopVirtualCamEffectType);
 
     eventManager.registerEventSource(OBSEventSource);
 
     eventFilterManager.registerFilter(SceneNameEventFilter);
 
     replaceVariableManager.registerReplaceVariable(SceneNameVariable);
+    replaceVariableManager.registerReplaceVariable(SceneCollectionNameVariable);
   },
 };
 
