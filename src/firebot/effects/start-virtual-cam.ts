@@ -1,4 +1,4 @@
-import { Firebot } from "firebot-custom-scripts-types";
+import { Firebot } from "@crowbartools/firebot-custom-scripts-types";
 import { startVirtualCam } from "../../obs-remote";
 
 export const StartVirtualCamEffectType: Firebot.EffectType<{}> = {

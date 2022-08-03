@@ -1,5 +1,5 @@
-import { ScriptModules } from "firebot-custom-scripts-types";
-import * as OBSWebSocket from "obs-websocket-js";
+import { ScriptModules } from "@crowbartools/firebot-custom-scripts-types";
+import OBSWebSocket, {OBSResponseTypes } from "obs-websocket-js";
 import {
   OBS_EVENT_SOURCE_ID,
   OBS_SCENE_CHANGED_EVENT_ID,
@@ -36,8 +36,8 @@ export function initRemote(
 export async function getSceneList(): Promise<string[]> {
   if (!connected) return [];
   try {
-    const sceneData = await obs.send("GetSceneList");
-    return sceneData.scenes.map((s) => s.name);
+    const sceneData = await obs.call("GetSceneList");
+    return sceneData.scenes.map((s: any) => s.name);
   } catch (error) {
     return [];
   }
@@ -46,8 +46,8 @@ export async function getSceneList(): Promise<string[]> {
 export async function getCurrentSceneName(): Promise<string> {
   if (!connected) return null;
   try {
-    const scene = await obs.send("GetCurrentScene");
-    return scene?.name;
+    const scene = await obs.call("GetCurrentProgramScene");
+    return scene?.currentProgramSceneName;
   } catch (error) {
     return null;
   }
@@ -56,8 +56,8 @@ export async function getCurrentSceneName(): Promise<string> {
 export async function setCurrentScene(sceneName: string): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("SetCurrentScene", {
-      "scene-name": sceneName,
+    await obs.call("SetCurrentProgramScene", {
+      sceneName
     });
   } catch (error) {
     logger.error("Failed to set current scene", error);
@@ -67,8 +67,8 @@ export async function setCurrentScene(sceneName: string): Promise<void> {
 export async function getSceneCollectionList(): Promise<string[]> {
   if (!connected) return [];
   try {
-    const sceneCollectionData = await obs.send("ListSceneCollections");
-    return sceneCollectionData["scene-collections"].map((s) => s["sc-name"]);
+    const sceneCollectionData = await obs.call("GetSceneCollectionList");
+    return sceneCollectionData.sceneCollections;
   } catch (error) {
     return [];
   }
@@ -77,8 +77,8 @@ export async function getSceneCollectionList(): Promise<string[]> {
 export async function getCurrentSceneCollectionName(): Promise<string> {
   if (!connected) return null;
   try {
-    const scene = await obs.send("GetCurrentSceneCollection");
-    return scene["sc-name"];
+    const response = await obs.call("GetSceneCollectionList");
+    return response?.currentSceneCollectionName;
   } catch (error) {
     return null;
   }
@@ -87,8 +87,8 @@ export async function getCurrentSceneCollectionName(): Promise<string> {
 export async function setCurrentSceneCollection(sceneCollectionName: string): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("SetCurrentSceneCollection", {
-      "sc-name": sceneCollectionName,
+    await obs.call("SetCurrentSceneCollection", {
+      sceneCollectionName
     });
   } catch (error) {
     logger.error("Failed to set current scene collection", error);
@@ -100,9 +100,9 @@ export type SourceData = Record<string, Array<{ id: number; name: string }>>;
 export async function getSourceData(): Promise<SourceData> {
   if (!connected) return null;
   try {
-    const sceneData = await obs.send("GetSceneList");
-    return sceneData.scenes.reduce((acc, current) => {
-      acc[current.name] = current.sources.map((si) => ({
+    const sceneData = await obs.call("GetSceneList");
+    return (sceneData.scenes as any[]).reduce((acc, current) => {
+      acc[current.name] = current.sources.map((si: any) => ({
         name: si.name,
         id: si.id,
       }));
@@ -119,13 +119,11 @@ export async function getSourceVisibility(
 ): Promise<boolean | null> {
   if (!connected) return null;
   try {
-    const sceneItemProperties = await obs.send("GetSceneItemProperties", {
-      "scene-name": sceneName,
-      item: {
-        id: sourceId,
-      },
+    const sceneItemProperties = await obs.call("GetSceneItemEnabled", {
+      sceneName,
+      sceneItemId: sourceId
     });
-    return sceneItemProperties?.visible;
+    return sceneItemProperties?.sceneItemEnabled;
   } catch (error) {
     logger.error("Failed to get scene item properties", error);
     return null;
@@ -139,16 +137,10 @@ export async function setSourceVisibility(
 ): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("SetSceneItemProperties", {
-      "scene-name": sceneName,
-      item: {
-        id: sourceId,
-      },
-      visible: visible,
-      bounds: undefined,
-      crop: undefined,
-      position: undefined,
-      scale: undefined,
+    await obs.call("SetSceneItemEnabled", {
+      sceneItemEnabled: visible,
+      sceneName,
+      sceneItemId: sourceId
     });
   } catch (error) {
     logger.error("Failed to set scene item properties", error);
@@ -156,38 +148,44 @@ export async function setSourceVisibility(
 }
 
 type OBSFilter = {
-  enabled: boolean;
-  name: string;
+  filterName: string;
+  filterEnabled: boolean;
+  filterIndex: number;
+  filterKind: string;
+  filterSettings: any;
 };
 
 export type OBSSource = {
-  name: string;
-  type: string;
-  typeId: string;
+  sceneItemId: string;
+  sceneItemIndex: number;
+  sourceName: string;
+  sourceType: string; 
+  inputKind?: string;
+  isGroup?: boolean;
   filters: Array<OBSFilter>;
 };
 
 export async function getAllSources(): Promise<Array<OBSSource>> {
   if (!connected) return null;
   try {
-    const sourceListData = await obs.send("GetSourcesList");
-    if (sourceListData && sourceListData.sources) {
-      let sources = (sourceListData.sources as unknown) as Array<OBSSource>;
-      const sceneNameList = await getSceneList();
-      sources = sources.concat(
-        sceneNameList.map(
-          (s) => ({ name: s, filters: [], type: "scene", typeId: "scene" } as OBSSource)
-        )
-      );
-      for (const source of sources) {
-        const sourceFiltersData = await obs.send("GetSourceFilters", {
-          sourceName: source.name,
-        });
-        source.filters = (sourceFiltersData.filters as unknown) as Array<OBSFilter>;
-      }
-      return sources;
+    const sourceListData = await obs.call("GetSceneItemList");
+    if(sourceListData?.sceneItems == null) {
+      return null;
     }
-    return null;
+    let sources = (sourceListData.sceneItems as unknown) as Array<OBSSource>;
+    const sceneNameList = await getSceneList();
+    sources = sources.concat(
+      sceneNameList.map(
+        (s) => ({ sourceName: s, filters: [], sourceType: "scene", inputKind: "scene" } as OBSSource)
+      )
+    );
+    for (const source of sources) {
+      const sourceFiltersData = await obs.call("GetSourceFilterList", {
+        sourceName: source.sourceName,
+      });
+      source.filters = (sourceFiltersData.filters as unknown) as Array<OBSFilter>;
+    }
+    return sources;
   } catch (error) {
     logger.error("Failed to get all sources", error);
     return null;
@@ -205,11 +203,11 @@ export async function getFilterEnabledStatus(
 ): Promise<boolean | null> {
   if (!connected) return null;
   try {
-    const filterInfo = await obs.send("GetSourceFilterInfo", {
+    const filterInfo = await obs.call("GetSourceFilter", {
       sourceName,
       filterName,
     });
-    return filterInfo?.enabled;
+    return filterInfo?.filterEnabled;
   } catch (error) {
     logger.error("Failed to get filter info", error);
     return null;
@@ -223,7 +221,7 @@ export async function setFilterEnabled(
 ): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("SetSourceFilterVisibility", {
+    await obs.call("SetSourceFilterEnabled", {
       sourceName,
       filterName,
       filterEnabled,
@@ -235,8 +233,8 @@ export async function setFilterEnabled(
 
 async function getSourceTypes() {
   try {
-    const sourceTypes = await obs.send("GetSourceTypesList");
-    return sourceTypes.types;
+    const sourceTypes = await obs.call("GetInputKindList");
+    return sourceTypes.inputKinds;
   } catch(error) {
     logger.error("Failed to get source types list", error);
     return [];
@@ -247,15 +245,14 @@ export async function getAudioSources(): Promise<Array<OBSSource>> {
   const sourceTypes = await getSourceTypes();
   const sources = await getAllSources();
   return sources.filter((s) => {
-    const type = sourceTypes.find(t => t.typeId === s.typeId);
-    return type?.caps.hasAudio;
+    return false;
   });
 }
 
 export async function toggleSourceMuted(sourceName: string) {
   try {
-    await obs.send("ToggleMute", {
-      source: sourceName
+    await obs.call("ToggleInputMute", {
+      inputName: sourceName
     })
   } catch(error) {
     logger.error("Failed to toggle mute for source", error);
@@ -264,9 +261,9 @@ export async function toggleSourceMuted(sourceName: string) {
 
 export async function setSourceMuted(sourceName: string, muted: boolean) {
   try {
-    await obs.send("SetMute", {
-      source: sourceName,
-      mute: muted
+    await obs.call("SetInputMute", {
+      inputName: sourceName,
+      inputMuted: muted
     })
   } catch(error) {
     logger.error("Failed to set mute for source", error);
@@ -276,8 +273,8 @@ export async function setSourceMuted(sourceName: string, muted: boolean) {
 export async function getStreamingStatus(): Promise<boolean> {
   if (!connected) return false;
   try {
-    const streamingStatus = await obs.send("GetStreamingStatus");
-    return streamingStatus.streaming;
+    const streamingStatus = await obs.call("GetStreamStatus");
+    return streamingStatus.outputActive;
   } catch (error) {
     logger.error("Failed to get streaming status", error);
     return false;
@@ -287,7 +284,7 @@ export async function getStreamingStatus(): Promise<boolean> {
 export async function startStreaming(): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("StartStreaming", {});
+    await obs.call("StartStream");
   } catch (error) {
     logger.error("Failed to start streaming", error);
     return;
@@ -297,7 +294,7 @@ export async function startStreaming(): Promise<void> {
 export async function stopStreaming(): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("StopStreaming");
+    await obs.call("StopStream");
   } catch (error) {
     logger.error("Failed to stop streaming", error);
     return;
@@ -307,7 +304,7 @@ export async function stopStreaming(): Promise<void> {
 export async function startVirtualCam(): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("StartVirtualCam");
+    await obs.call("StartVirtualCam");
   } catch (error) {
     logger.error("Failed to start virtual camera", error);
     return;
@@ -317,7 +314,7 @@ export async function startVirtualCam(): Promise<void> {
 export async function stopVirtualCam(): Promise<void> {
   if (!connected) return;
   try {
-    await obs.send("StopVirtualCam");
+    await obs.call("StopVirtualCam");
   } catch (error) {
     logger.error("Failed to stop virtual camera", error);
     return;
@@ -325,30 +322,30 @@ export async function stopVirtualCam(): Promise<void> {
 }
 
 function setupRemoteListeners() {
-  obs.on("SwitchScenes", (data) => {
+  obs.on("CurrentProgramSceneChanged", ({sceneName}) => {
     eventManager?.triggerEvent(
       OBS_EVENT_SOURCE_ID,
       OBS_SCENE_CHANGED_EVENT_ID,
       {
-        sceneName: data["scene-name"],
+        sceneName,
       }
     );
   });
 
-  obs.on("StreamStarted", () => {
-    eventManager?.triggerEvent(
-      OBS_EVENT_SOURCE_ID,
-      OBS_STREAM_STARTED_EVENT_ID,
-      {}
-    );
-  });
-
-  obs.on("StreamStopped", () => {
-    eventManager?.triggerEvent(
-      OBS_EVENT_SOURCE_ID,
-      OBS_STREAM_STOPPED_EVENT_ID,
-      {}
-    );
+  obs.on("StreamStateChanged", ({outputActive}) => {
+    if(outputActive) {
+      eventManager?.triggerEvent(
+        OBS_EVENT_SOURCE_ID,
+        OBS_STREAM_STARTED_EVENT_ID,
+        {}
+      );
+    } else {
+      eventManager?.triggerEvent(
+        OBS_EVENT_SOURCE_ID,
+        OBS_STREAM_STOPPED_EVENT_ID,
+        {}
+      );
+    }
   });
 }
 
@@ -361,7 +358,7 @@ async function maintainConnection(ip: string, port: number, password: string, lo
 
       obs.removeAllListeners();
 
-      await obs.connect({ address: `${ip}:${port}`, password: password });
+      await obs.connect(`ws://${ip}:${port}`, password);
 
       logger.info("Successfully connected to OBS.");
 

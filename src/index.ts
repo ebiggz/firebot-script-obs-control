@@ -1,4 +1,4 @@
-import { Firebot } from "firebot-custom-scripts-types";
+import { Firebot } from "@crowbartools/firebot-custom-scripts-types";
 import { initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
 import { setupFrontendListeners } from "./firebot/communicator";
@@ -46,7 +46,7 @@ const script: Firebot.CustomScript<Params> = {
       },
       port: {
         type: "number",
-        default: 4444,
+        default: 4455,
         description: "Port",
         secondaryDescription:
           "Port the OBS Websocket is running on. Default is 4444.",
@@ -56,7 +56,7 @@ const script: Firebot.CustomScript<Params> = {
         default: "",
         description: "Password",
         secondaryDescription:
-          "The password set for the OBS Websocket. Can be left blank if none set.",
+          "The password set for the OBS Websocket.",
       },
       logging: {
         type: "boolean",

@@ -1,4 +1,4 @@
-import { EventSource } from "firebot-custom-scripts-types/types/modules/event-manager";
+import { EventSource } from "@crowbartools/firebot-custom-scripts-types/types/modules/event-manager";
 import { OBS_EVENT_SOURCE_ID, OBS_SCENE_CHANGED_EVENT_ID, OBS_STREAM_STARTED_EVENT_ID, OBS_STREAM_STOPPED_EVENT_ID } from "../constants";
 
 export const OBSEventSource: EventSource = {

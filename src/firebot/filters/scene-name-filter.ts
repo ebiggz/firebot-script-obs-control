@@ -1,4 +1,4 @@
-import { EventFilter } from "firebot-custom-scripts-types/types/modules/event-filter-manager";
+import { EventFilter } from "@crowbartools/firebot-custom-scripts-types/types/modules/event-filter-manager";
 import { OBS_EVENT_SOURCE_ID, OBS_SCENE_CHANGED_EVENT_ID } from "../constants";
 
 export const SceneNameEventFilter: EventFilter = {
