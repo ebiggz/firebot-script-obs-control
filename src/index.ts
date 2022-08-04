@@ -28,9 +28,9 @@ const script: Firebot.CustomScript<Params> = {
     return {
       name: "OBS Control",
       description:
-        "Adds several OBS effects, events, and $variables. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis), version v4.7+ but not v5! Also note: updating any of these settings requires a Firebot restart to take effect.",
+        "Adds several OBS effects, events, and $variables. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis), version v5 and not v4! Also note: updating any of these settings requires a Firebot restart to take effect.",
       author: "ebiggz",
-      version: "1.6.0",
+      version: "2.0.0-beta",
       firebotVersion: "5",
       startupOnly: true,
     };

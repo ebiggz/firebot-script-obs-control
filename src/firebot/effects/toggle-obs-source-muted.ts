@@ -108,9 +108,9 @@ export const ToggleSourceMutedEffectType: Firebot.EffectType<EffectProperties> =
         return "Toggle";
       }
       if (selectedSource.action === true) {
-        return "Enable";
+        return "Mute";
       }
-      return "Disable";
+      return "Unmute";
     };
 
     const capitalizeWords = (input: string) => input

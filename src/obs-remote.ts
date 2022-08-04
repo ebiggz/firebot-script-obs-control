@@ -37,7 +37,7 @@ export async function getSceneList(): Promise<string[]> {
   if (!connected) return [];
   try {
     const sceneData = await obs.call("GetSceneList");
-    return sceneData.scenes.map((s: any) => s.name);
+    return sceneData.scenes.map((s: any) => s.sceneName);
   } catch (error) {
     return [];
   }
@@ -101,13 +101,15 @@ export async function getSourceData(): Promise<SourceData> {
   if (!connected) return null;
   try {
     const sceneData = await obs.call("GetSceneList");
-    return (sceneData.scenes as any[]).reduce((acc, current) => {
-      acc[current.name] = current.sources.map((si: any) => ({
-        name: si.name,
-        id: si.id,
-      }));
-      return acc;
-    }, {} as SourceData);
+    const data: SourceData = {};
+    for(const scene of sceneData.scenes) {
+      const itemList = await obs.call("GetSceneItemList", { sceneName: scene.sceneName as string })
+      data[scene.sceneName as string] = itemList.sceneItems.map(i => ({
+        id: i.sceneItemId as number,
+        name: i.sourceName as string
+      }))
+    }
+    return data;
   } catch (error) {
     return null;
   }
@@ -148,6 +150,11 @@ export async function setSourceVisibility(
 }
 
 type OBSFilter = {
+  enabled: boolean;
+  name: string;
+};
+
+type OBSFilterData = {
   filterName: string;
   filterEnabled: boolean;
   filterIndex: number;
@@ -156,34 +163,38 @@ type OBSFilter = {
 };
 
 export type OBSSource = {
-  sceneItemId: string;
-  sceneItemIndex: number;
-  sourceName: string;
-  sourceType: string; 
-  inputKind?: string;
-  isGroup?: boolean;
+  name: string;
+  type: string;
+  typeId: string;
   filters: Array<OBSFilter>;
 };
 
-export async function getAllSources(): Promise<Array<OBSSource>> {
+export async function getAllSources(): Promise<Array<OBSSource> | null> {
   if (!connected) return null;
   try {
-    const sourceListData = await obs.call("GetSceneItemList");
-    if(sourceListData?.sceneItems == null) {
+    const sourceListData = await obs.call("GetInputList");
+    if(sourceListData?.inputs == null) {
       return null;
     }
-    let sources = (sourceListData.sceneItems as unknown) as Array<OBSSource>;
+    const sources: OBSSource[] = sourceListData.inputs.map(i => ({
+      name: i.inputName as string,
+      type: i.inputKind as string,
+      typeId: i.inputKind as string,
+      filters: []
+    }));
+    
     const sceneNameList = await getSceneList();
-    sources = sources.concat(
-      sceneNameList.map(
-        (s) => ({ sourceName: s, filters: [], sourceType: "scene", inputKind: "scene" } as OBSSource)
-      )
-    );
+    sources.push(
+      ...sceneNameList.map(
+        (s) => ({ name: s, filters: [], type: "scene", typeId: "scene" } as OBSSource)
+        )
+        );
+
     for (const source of sources) {
       const sourceFiltersData = await obs.call("GetSourceFilterList", {
-        sourceName: source.sourceName,
+        sourceName: source.name,
       });
-      source.filters = (sourceFiltersData.filters as unknown) as Array<OBSFilter>;
+      source.filters = (sourceFiltersData.filters as unknown as Array<OBSFilterData>).map(f => ({ name: f.filterName, enabled: f.filterEnabled }));
     }
     return sources;
   } catch (error) {
@@ -194,7 +205,7 @@ export async function getAllSources(): Promise<Array<OBSSource>> {
 
 export async function getSourcesWithFilters(): Promise<Array<OBSSource>> {
   const sources = await getAllSources();
-  return sources.filter((s) => s.filters?.length > 0);
+  return sources?.filter((s) => s.filters?.length > 0);
 }
 
 export async function getFilterEnabledStatus(
@@ -242,11 +253,18 @@ async function getSourceTypes() {
 }
 
 export async function getAudioSources(): Promise<Array<OBSSource>> {
-  const sourceTypes = await getSourceTypes();
   const sources = await getAllSources();
-  return sources.filter((s) => {
-    return false;
-  });
+  const audioSupportedSources = [];
+  for(const source of sources) {
+    try {
+      const getMonitorResponse = await obs.call("GetInputAudioMonitorType", { inputName: source.name });
+      if(getMonitorResponse?.monitorType != null) {
+        audioSupportedSources.push(source)
+      }
+    } catch (e) {}
+  }
+
+  return audioSupportedSources;
 }
 
 export async function toggleSourceMuted(sourceName: string) {
