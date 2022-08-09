@@ -1,5 +1,4 @@
 import { Firebot } from "@crowbartools/firebot-custom-scripts-types";
-import { initRemote } from "./obs-remote";
 import { initLogger, logger } from "./logger";
 import { setupFrontendListeners } from "./firebot/communicator";
 import { ChangeSceneEffectType } from "./firebot/effects/change-scene-effect-type";
@@ -15,57 +14,24 @@ import { StopStreamEffectType } from "./firebot/effects/stop-stream";
 import { StartVirtualCamEffectType } from "./firebot/effects/start-virtual-cam";
 import { StopVirtualCamEffectType } from "./firebot/effects/stop-virtual-cam";
 import { ToggleSourceMutedEffectType } from "./firebot/effects/toggle-obs-source-muted";
+import { getObsIntegration } from "./firebot/obs-integration";
 
-interface Params {
-  ipAddress: string;
-  port: number;
-  password: string;
-  logging: boolean;
-}
-
-const script: Firebot.CustomScript<Params> = {
+const script: Firebot.CustomScript = {
   getScriptManifest: () => {
     return {
       name: "OBS Control",
       description:
-        "Adds several OBS effects, events, and $variables. IMPORTANT: This requires the 'obs-websocket' OBS plugin (by Palakis), version v5 and not v4! Also note: updating any of these settings requires a Firebot restart to take effect.",
+        "Adds an OBS integration that allows Firebot to control OBS. Configure in the Integrations settings tab.",
       author: "ebiggz",
-      version: "2.0.0-beta",
+      version: "2.0.0-beta2",
       firebotVersion: "5",
       startupOnly: true,
     };
   },
   getDefaultParameters: () => {
-    return {
-      ipAddress: {
-        type: "string",
-        default: "localhost",
-        description: "IP Address",
-        secondaryDescription:
-          "The ip address of the computer running OBS. Use 'localhost' for the same computer.",
-      },
-      port: {
-        type: "number",
-        default: 4455,
-        description: "Port",
-        secondaryDescription:
-          "Port the OBS Websocket is running on. Default is 4444.",
-      },
-      password: {
-        type: "password",
-        default: "",
-        description: "Password",
-        secondaryDescription:
-          "The password set for the OBS Websocket.",
-      },
-      logging: {
-        type: "boolean",
-        default: true,
-        description: "Enable logging for OBS Errors",
-      }
-    };
+    return {};
   },
-  run: ({ parameters, modules }) => {
+  run: ({ modules }) => {
     initLogger(modules.logger);
 
     logger.info("Starting OBS Control...");
@@ -76,21 +42,13 @@ const script: Firebot.CustomScript<Params> = {
       frontendCommunicator,
       replaceVariableManager,
       eventFilterManager,
+      integrationManager,
     } = modules;
 
-    initRemote(
-      {
-        ip: parameters.ipAddress,
-        port: parameters.port,
-        password: parameters.password,
-        logging: parameters.logging,
-      },
-      {
-        eventManager,
-      }
-    );
-
     setupFrontendListeners(frontendCommunicator);
+
+    const obsIntegration = getObsIntegration(eventManager);
+    integrationManager.registerIntegration(obsIntegration);
 
     effectManager.registerEffect(ChangeSceneEffectType);
     effectManager.registerEffect(ChangeSceneCollectionEffectType);
