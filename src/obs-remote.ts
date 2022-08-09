@@ -1,5 +1,5 @@
 import { ScriptModules } from "@crowbartools/firebot-custom-scripts-types";
-import OBSWebSocket, {OBSResponseTypes } from "obs-websocket-js";
+import OBSWebSocket, { OBSResponseTypes } from "obs-websocket-js";
 import {
   OBS_EVENT_SOURCE_ID,
   OBS_SCENE_CHANGED_EVENT_ID,
@@ -20,18 +20,20 @@ export function initRemote(
     port,
     password,
     logging,
+    forceConnect,
   }: {
     ip: string;
     port: number;
     password: string;
     logging: boolean;
+    forceConnect?: boolean;
   },
   modules: {
     eventManager: ScriptModules["eventManager"];
   }
 ) {
   eventManager = modules.eventManager;
-  maintainConnection(ip, port, password, logging);
+  maintainConnection(ip, port, password, logging, forceConnect);
 }
 export async function getSceneList(): Promise<string[]> {
   if (!connected) return [];
@@ -57,7 +59,7 @@ export async function setCurrentScene(sceneName: string): Promise<void> {
   if (!connected) return;
   try {
     await obs.call("SetCurrentProgramScene", {
-      sceneName
+      sceneName,
     });
   } catch (error) {
     logger.error("Failed to set current scene", error);
@@ -84,11 +86,13 @@ export async function getCurrentSceneCollectionName(): Promise<string> {
   }
 }
 
-export async function setCurrentSceneCollection(sceneCollectionName: string): Promise<void> {
+export async function setCurrentSceneCollection(
+  sceneCollectionName: string
+): Promise<void> {
   if (!connected) return;
   try {
     await obs.call("SetCurrentSceneCollection", {
-      sceneCollectionName
+      sceneCollectionName,
     });
   } catch (error) {
     logger.error("Failed to set current scene collection", error);
@@ -102,12 +106,14 @@ export async function getSourceData(): Promise<SourceData> {
   try {
     const sceneData = await obs.call("GetSceneList");
     const data: SourceData = {};
-    for(const scene of sceneData.scenes) {
-      const itemList = await obs.call("GetSceneItemList", { sceneName: scene.sceneName as string })
-      data[scene.sceneName as string] = itemList.sceneItems.map(i => ({
+    for (const scene of sceneData.scenes) {
+      const itemList = await obs.call("GetSceneItemList", {
+        sceneName: scene.sceneName as string,
+      });
+      data[scene.sceneName as string] = itemList.sceneItems.map((i) => ({
         id: i.sceneItemId as number,
-        name: i.sourceName as string
-      }))
+        name: i.sourceName as string,
+      }));
     }
     return data;
   } catch (error) {
@@ -123,7 +129,7 @@ export async function getSourceVisibility(
   try {
     const sceneItemProperties = await obs.call("GetSceneItemEnabled", {
       sceneName,
-      sceneItemId: sourceId
+      sceneItemId: sourceId,
     });
     return sceneItemProperties?.sceneItemEnabled;
   } catch (error) {
@@ -142,7 +148,7 @@ export async function setSourceVisibility(
     await obs.call("SetSceneItemEnabled", {
       sceneItemEnabled: visible,
       sceneName,
-      sceneItemId: sourceId
+      sceneItemId: sourceId,
     });
   } catch (error) {
     logger.error("Failed to set scene item properties", error);
@@ -173,28 +179,36 @@ export async function getAllSources(): Promise<Array<OBSSource> | null> {
   if (!connected) return null;
   try {
     const sourceListData = await obs.call("GetInputList");
-    if(sourceListData?.inputs == null) {
+    if (sourceListData?.inputs == null) {
       return null;
     }
-    const sources: OBSSource[] = sourceListData.inputs.map(i => ({
+    const sources: OBSSource[] = sourceListData.inputs.map((i) => ({
       name: i.inputName as string,
       type: i.inputKind as string,
       typeId: i.inputKind as string,
-      filters: []
+      filters: [],
     }));
-    
+
     const sceneNameList = await getSceneList();
     sources.push(
       ...sceneNameList.map(
-        (s) => ({ name: s, filters: [], type: "scene", typeId: "scene" } as OBSSource)
-        )
-        );
+        (s) =>
+          ({
+            name: s,
+            filters: [],
+            type: "scene",
+            typeId: "scene",
+          } as OBSSource)
+      )
+    );
 
     for (const source of sources) {
       const sourceFiltersData = await obs.call("GetSourceFilterList", {
         sourceName: source.name,
       });
-      source.filters = (sourceFiltersData.filters as unknown as Array<OBSFilterData>).map(f => ({ name: f.filterName, enabled: f.filterEnabled }));
+      source.filters = (
+        sourceFiltersData.filters as unknown as Array<OBSFilterData>
+      ).map((f) => ({ name: f.filterName, enabled: f.filterEnabled }));
     }
     return sources;
   } catch (error) {
@@ -246,7 +260,7 @@ async function getSourceTypes() {
   try {
     const sourceTypes = await obs.call("GetInputKindList");
     return sourceTypes.inputKinds;
-  } catch(error) {
+  } catch (error) {
     logger.error("Failed to get source types list", error);
     return [];
   }
@@ -255,11 +269,13 @@ async function getSourceTypes() {
 export async function getAudioSources(): Promise<Array<OBSSource>> {
   const sources = await getAllSources();
   const audioSupportedSources = [];
-  for(const source of sources) {
+  for (const source of sources) {
     try {
-      const getMonitorResponse = await obs.call("GetInputAudioMonitorType", { inputName: source.name });
-      if(getMonitorResponse?.monitorType != null) {
-        audioSupportedSources.push(source)
+      const getMonitorResponse = await obs.call("GetInputAudioMonitorType", {
+        inputName: source.name,
+      });
+      if (getMonitorResponse?.monitorType != null) {
+        audioSupportedSources.push(source);
       }
     } catch (e) {}
   }
@@ -270,9 +286,9 @@ export async function getAudioSources(): Promise<Array<OBSSource>> {
 export async function toggleSourceMuted(sourceName: string) {
   try {
     await obs.call("ToggleInputMute", {
-      inputName: sourceName
-    })
-  } catch(error) {
+      inputName: sourceName,
+    });
+  } catch (error) {
     logger.error("Failed to toggle mute for source", error);
   }
 }
@@ -281,9 +297,9 @@ export async function setSourceMuted(sourceName: string, muted: boolean) {
   try {
     await obs.call("SetInputMute", {
       inputName: sourceName,
-      inputMuted: muted
-    })
-  } catch(error) {
+      inputMuted: muted,
+    });
+  } catch (error) {
     logger.error("Failed to set mute for source", error);
   }
 }
@@ -340,7 +356,7 @@ export async function stopVirtualCam(): Promise<void> {
 }
 
 function setupRemoteListeners() {
-  obs.on("CurrentProgramSceneChanged", ({sceneName}) => {
+  obs.on("CurrentProgramSceneChanged", ({ sceneName }) => {
     eventManager?.triggerEvent(
       OBS_EVENT_SOURCE_ID,
       OBS_SCENE_CHANGED_EVENT_ID,
@@ -350,8 +366,8 @@ function setupRemoteListeners() {
     );
   });
 
-  obs.on("StreamStateChanged", ({outputActive}) => {
-    if(outputActive) {
+  obs.on("StreamStateChanged", ({ outputActive }) => {
+    if (outputActive) {
       eventManager?.triggerEvent(
         OBS_EVENT_SOURCE_ID,
         OBS_STREAM_STARTED_EVENT_ID,
@@ -367,10 +383,28 @@ function setupRemoteListeners() {
   });
 }
 
-async function maintainConnection(ip: string, port: number, password: string, logging: Boolean) {
+let reconnectTimeout: NodeJS.Timeout | null = null;
+let isForceClosing = false;
+async function maintainConnection(
+  ip: string,
+  port: number,
+  password: string,
+  logging: boolean,
+  forceClose = false
+) {
+  if (forceClose && connected) {
+    isForceClosing = true;
+    await obs.disconnect();
+    connected = false;
+    isForceClosing = false;
+  }
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
   if (!connected) {
     try {
-      if (logging){
+      if (logging) {
         logger.debug("Trying to connect to OBS...");
       }
 
@@ -387,19 +421,26 @@ async function maintainConnection(ip: string, port: number, password: string, lo
       obs.on("ConnectionClosed", () => {
         if (!connected) return;
         connected = false;
+        if (isForceClosing) return;
         try {
           logger.info("Connection lost, attempting again in 10 secs.");
-          setTimeout(() => maintainConnection(ip, port, password, logging), 10000);
+          reconnectTimeout = setTimeout(
+            () => maintainConnection(ip, port, password, logging),
+            10000
+          );
         } catch (err) {
           // silently fail
         }
       });
     } catch (error) {
       logger.debug("Failed to connect, attempting again in 10 secs.");
-      if(logging){
+      if (logging) {
         logger.debug(error);
       }
-      setTimeout(() => maintainConnection(ip, port, password, logging), 10000);
+      reconnectTimeout = setTimeout(
+        () => maintainConnection(ip, port, password, logging),
+        10000
+      );
     }
   }
 }
