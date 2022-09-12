@@ -1,5 +1,9 @@
 # OBS Control Script for Firebot
 
+
+> # <span style="color:red">🔴 NOTE: OBS integration is now built directly into Firebot as of v5.54.0. This script is no longer needed!</span>
+
+
 ## How to use
 1. Install the [OBS Websocket plugin](https://github.com/obs-websocket/obs-websocket/releases/tag/4.9.1) for OBS (Make sure to install v4.9.x and NOT v5)
 2. Download the latest **obsControl.js** file from [Releases](https://github.com/ebiggz/firebot-script-obs-control/releases)
